@@ -1,0 +1,21 @@
+{
+    "name": "berny/tag-bundle",
+    "description": "Helps collecting tagged services to inject them into others",
+    "license": "MIT",
+    "homepage": "https://github.com/xphere/tag-bundle",
+    "authors": [
+        {
+            "name": "Berny Cantos",
+            "email": "be@rny.cc"
+        }
+    ],
+    "type": "symfony-bundle",
+    "target-dir": "Berny/Bundle/TagBundle",
+    "autoload": {
+        "psr-0": { "Berny\\Bundle\\TagBundle\\": "" }
+    },
+    "require": {
+        "symfony/dependency-injection": "*",
+        "symfony/http-kernel": "*"
+    }
+}
