@@ -13,10 +13,32 @@ namespace Berny\Bundle\TagBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Collects all tag consumers and configures them
+ * Collects all tag consumers and configures them like this:
+ *
+ * All services tagged "tag" are injected into the consumer through multiple "method" calls.
+ * If "bulk" is true, calls "method" only once, but with all tagged services in an array.
+ *
+ * You can define a tag consumer with the "tag.consumer" tag. (by default)
+ * Mandatory parameters: method, tag
+ * Optional parameters: bulk (=false)
+ *
+ * Example:
+ *
+ * services:
+ *   application:
+ *     class: Symfony\Component\Console\Application
+ *     tags:
+ *       - { name: "tag.consumer", tag: "console.command", method: "addCommands", bulk: true }
+ *
+ *   command_1:
+ *     class: Acme\Bundle\Command\MyCommand
+ *     tags:
+ *       - { name: "console.command" }
+ *
  */
 class TagConsumerPass implements CompilerPassInterface
 {
@@ -31,6 +53,8 @@ class TagConsumerPass implements CompilerPassInterface
     }
 
     /**
+     * Process the container
+     *
      * @param ContainerBuilder $container
      * @throws \InvalidArgumentException
      */
@@ -39,31 +63,63 @@ class TagConsumerPass implements CompilerPassInterface
         foreach ($container->findTaggedServiceIds($this->tag) as $id => $tags) {
             $definition = $container->getDefinition($id);
             foreach ($tags as $attr) {
-                if (!isset($attr['method'])) {
-                    throw $this->mustDefineAttributeException($id, 'method');
-                }
-                if (!isset($attr['tag'])) {
-                    throw $this->mustDefineAttributeException($id, 'tag');
-                }
-                $taggedServiceIds = $container->findTaggedServiceIds($attr['tag']);
+                $method = $this->getAttribute($id, $attr, 'method');
+                $tag = $this->getAttribute($id, $attr, 'tag');
+                $serviceIds = array_keys($container->findTaggedServiceIds($tag));
                 if (isset($attr['bulk']) && $attr['bulk']) {
-                    $services = array();
-                    foreach ($taggedServiceIds as $subservice => $subtags) {
-                        $services[] = new Reference($subservice);
-                    }
-                    $definition->addMethodCall($attr['method'], array($services));
+                    $this->injectBulk($definition, $serviceIds, $method);
                 } else {
-                    foreach ($taggedServiceIds as $subservice => $subtags) {
-                        $definition->addMethodCall($attr['method'], array(new Reference($subservice)));
-                    }
+                    $this->injectEach($definition, $serviceIds, $method);
                 }
             }
         }
     }
 
-    protected function mustDefineAttributeException($id, $attribute)
+    /**
+     * Injects $serviceIds into $definition with one call to $method for each service
+     *
+     * @param Definition $definition
+     * @param array $serviceIds
+     * @param string $method
+     */
+    protected function injectEach(Definition $definition, array $serviceIds, $method)
     {
-        return new \InvalidArgumentException(sprintf(
+        foreach ($serviceIds as $serviceId) {
+            $definition->addMethodCall($method, array(new Reference($serviceId)));
+        }
+    }
+
+    /**
+     * Injects $serviceIds into $definition with one call to $method with all services in an array
+     *
+     * @param Definition $definition
+     * @param array $serviceIds
+     * @param string $method
+     */
+    protected function injectBulk(Definition $definition, array $serviceIds, $method)
+    {
+        $services = array();
+        foreach ($serviceIds as $serviceId) {
+            $services[] = new Reference($serviceId);
+        }
+        $definition->addMethodCall($method, array($services));
+    }
+
+    /**
+     * Get attribute value
+     *
+     * @param string $id
+     * @param array $attributes
+     * @param string $attribute
+     * @throws \InvalidArgumentException
+     */
+    protected function getAttribute($id, array $attributes, $attribute)
+    {
+        if (isset($attributes[$attribute])) {
+            return $attributes[$attribute];
+        }
+
+        throw new \InvalidArgumentException(sprintf(
             'Service "%s" must define the "%s" attribute on "%s" tags.',
             $id, $attribute, $this->tag
         ));

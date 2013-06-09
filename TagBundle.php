@@ -20,7 +20,7 @@ class TagBundle extends Bundle
     {
         parent::build($container);
 
-        $container->addCompilerPass(new DependencyInjection\TagConsumerPass('tag.consumer'));
-        $container->addCompilerPass(new DependencyInjection\TagInjectorPass('tag.injector'));
+        $container->addCompilerPass(new DependencyInjection\TagConsumerPass());
+        $container->addCompilerPass(new DependencyInjection\TagInjectablePass());
     }
 }
