@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Collects all tag consumers and configures them
  */
-class CollectTagsCompilerPass implements CompilerPassInterface
+class TagConsumerPass implements CompilerPassInterface
 {
     private $tag;
 

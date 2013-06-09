@@ -20,6 +20,6 @@ class TagBundle extends Bundle
     {
         parent::build($container);
 
-        $container->addCompilerPass(new DependencyInjection\CollectTagsCompilerPass('tag.consumer'));
+        $container->addCompilerPass(new DependencyInjection\TagConsumerPass('tag.consumer'));
     }
 }
