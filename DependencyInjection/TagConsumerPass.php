@@ -110,15 +110,16 @@ class TagConsumerPass implements CompilerPassInterface
      */
     protected function getSortedReferences($serviceIds)
     {
-        $ordered = array();
-        $unordered = array();
-        foreach ($serviceIds as $serviceId => $tag) {
+        $ordered = $unordered = array();
+        foreach ($serviceIds as $serviceId => $tags) {
             $service = new Reference($serviceId);
-            $order = isset($tag['order']) ? $tag['order'] : null;
-            if ($order === null) {
-                $unordered[] = $service;
-            } else {
-                $ordered[$order] = $service;
+            foreach ($tags as $tag) {
+                $order = isset($tag['order']) ? $tag['order'] : null;
+                if ($order === null) {
+                    $unordered[] = $service;
+                } else {
+                    $ordered[$order][] = $service;
+                }
             }
         }
         if (empty($ordered)) {
