@@ -65,11 +65,12 @@ class TagConsumerPass implements CompilerPassInterface
             foreach ($tags as $attr) {
                 $method = $this->getAttribute($id, $attr, 'method');
                 $tag = $this->getAttribute($id, $attr, 'tag');
-                $serviceIds = array_keys($container->findTaggedServiceIds($tag));
+                $serviceIds = $container->findTaggedServiceIds($tag);
+                $services = $this->getSortedReferences($serviceIds);
                 if (isset($attr['bulk']) && $attr['bulk']) {
-                    $this->injectBulk($definition, $serviceIds, $method);
+                    $this->injectBulk($definition, $services, $method);
                 } else {
-                    $this->injectEach($definition, $serviceIds, $method);
+                    $this->injectEach($definition, $services, $method);
                 }
             }
         }
@@ -79,13 +80,13 @@ class TagConsumerPass implements CompilerPassInterface
      * Injects $serviceIds into $definition with one call to $method for each service
      *
      * @param Definition $definition
-     * @param array $serviceIds
+     * @param Reference[] $services
      * @param string $method
      */
-    protected function injectEach(Definition $definition, array $serviceIds, $method)
+    protected function injectEach(Definition $definition, array $services, $method)
     {
-        foreach ($serviceIds as $serviceId) {
-            $definition->addMethodCall($method, array(new Reference($serviceId)));
+        foreach ($services as $service) {
+            $definition->addMethodCall($method, array($service));
         }
     }
 
@@ -93,16 +94,39 @@ class TagConsumerPass implements CompilerPassInterface
      * Injects $serviceIds into $definition with one call to $method with all services in an array
      *
      * @param Definition $definition
-     * @param array $serviceIds
+     * @param Reference[] $services
      * @param string $method
      */
-    protected function injectBulk(Definition $definition, array $serviceIds, $method)
+    protected function injectBulk(Definition $definition, array $services, $method)
     {
-        $services = array();
-        foreach ($serviceIds as $serviceId) {
-            $services[] = new Reference($serviceId);
-        }
         $definition->addMethodCall($method, array($services));
+    }
+
+    /**
+     * Return all tagged services, optionally ordered by 'order' attribute
+     *
+     * @param array $serviceIds
+     * @return Reference[]
+     */
+    protected function getSortedReferences($serviceIds)
+    {
+        $ordered = array();
+        $unordered = array();
+        foreach ($serviceIds as $serviceId => $tag) {
+            $service = new Reference($serviceId);
+            $order = isset($tag['order']) ? $tag['order'] : null;
+            if ($order === null) {
+                $unordered[] = $service;
+            } else {
+                $ordered[$order] = $service;
+            }
+        }
+        if (empty($ordered)) {
+            return $unordered;
+        }
+        ksort($ordered);
+        $ordered[] = $unordered;
+        return call_user_func_array('array_merge', $ordered);
     }
 
     /**
