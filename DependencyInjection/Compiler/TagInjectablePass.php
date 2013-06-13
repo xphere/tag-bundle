@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Berny\Bundle\TagBundle\DependencyInjection;
+namespace Berny\Bundle\TagBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
