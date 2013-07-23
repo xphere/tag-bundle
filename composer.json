@@ -15,7 +15,7 @@
         "psr-0": { "Berny\\Bundle\\TagBundle\\": "" }
     },
     "require": {
-        "symfony/dependency-injection": "*",
-        "symfony/http-kernel": "*"
+        "symfony/dependency-injection": "~2.0",
+        "symfony/http-kernel": "~2.0"
     }
 }
