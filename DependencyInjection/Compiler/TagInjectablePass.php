@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\Reference;
  * Call "method" in each service tagged "tag", passing the "injectable" service as parameter.
  *
  * You can define an injectable with the "tag.injectable" tag. (by default)
+ * Also you can redefine the method on a per service basis.
  * Mandatory parameters: method, tag
  * Optional parameters: -
  *
@@ -35,6 +36,11 @@ use Symfony\Component\DependencyInjection\Reference;
  *     class: Acme\Bundle\Service\MyService
  *     tags:
  *       - { name: "dispatcher.aware" }
+ *
+ *   myservice:
+ *     class: Acme\Bundle\Service\OtherService
+ *     tags:
+ *       - { name: "dispatcher.aware", "method": "setEventDispatcher" }
  *
  */
 class TagInjectablePass implements CompilerPassInterface
@@ -58,11 +64,14 @@ class TagInjectablePass implements CompilerPassInterface
         foreach ($container->findTaggedServiceIds($this->tag) as $id => $tags) {
             $reference = new Reference($id);
             foreach ($tags as $attr) {
-                $method = $this->getAttribute($id, $attr, 'method');
+                $defaultMethod = $this->getAttribute($id, $attr, 'method');
                 $tag = $this->getAttribute($id, $attr, 'tag');
-                $serviceIds = array_keys($container->findTaggedServiceIds($tag));
-                foreach ($serviceIds as $serviceId) {
-                    $container->getDefinition($serviceId)->addMethodCall($method, array($reference));
+                foreach ($container->findTaggedServiceIds($tag) as $serviceId => $serviceTags) {
+                    $definition = $container->getDefinition($serviceId);
+                    foreach ($serviceTags as $attr) {
+                        $method = isset($attr['method']) ? $attr['method'] : $defaultMethod;
+                        $definition->addMethodCall($method, array($reference));
+                    }
                 }
             }
         }

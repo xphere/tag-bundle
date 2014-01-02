@@ -49,6 +49,26 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($dep1->getInjectable(), $dep3->getInjectable());
     }
 
+    public function test_custom_method_on_a_per_injectable_aware_basis()
+    {
+        $cb = $this->getContainer(new TagInjectablePass(), array(
+            'my_injectable' => $this->getInjectableDefinition()->addTag('tag.injectable', array(
+                'tag' => 'injectable_aware',
+                'method' => 'setInjectable'
+            )),
+            'my_dep_1' => $this->getInjectableAwareDefinition()->addTag('injectable_aware'),
+            'my_dep_2' => $this->getAlternateInjectableAwareDefinition()->addTag('injectable_aware', array(
+                'method' => 'setCustomInjectableMethod',
+            )),
+        ));
+
+        $dep1 = $cb->get('my_dep_1');
+        $dep2 = $cb->get('my_dep_2');
+
+        $this->assertInstanceOf('StdClass', $dep1->getInjectable());
+        $this->assertSame($dep1->getInjectable(), $dep2->getInjectable());
+    }
+
     /**
      * @return Definition
      */
@@ -63,6 +83,14 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
     protected function getInjectableAwareDefinition()
     {
         return new Definition('MockedInjectableAwareService');
+    }
+
+    /**
+     * @return Definition
+     */
+    protected function getAlternateInjectableAwareDefinition()
+    {
+        return new Definition('MockedAlternateInjectableAwareService');
     }
 
     /**
@@ -88,6 +116,21 @@ class MockedInjectableAwareService
     protected $injectable;
 
     public function setInjectable($injectable)
+    {
+        $this->injectable = $injectable;
+    }
+
+    public function getInjectable()
+    {
+        return $this->injectable;
+    }
+}
+
+class MockedAlternateInjectableAwareService
+{
+    protected $injectable;
+
+    public function setCustomInjectableMethod($injectable)
     {
         $this->injectable = $injectable;
     }
