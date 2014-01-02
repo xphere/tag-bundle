@@ -24,6 +24,23 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
     }
 
+    public function test_custom_consumer_tag()
+    {
+        $consumerTagName = 'service.consumer';
+        $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
+            'my_service' => $this->getConsumerDefinition()->addTag($consumerTagName, array(
+                'tag' => 'dependency',
+                'method' => 'addDependency'
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(1, $dependencies);
+        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+    }
+
     /**
      * @return Definition
      */
