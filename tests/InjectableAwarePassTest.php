@@ -28,6 +28,27 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($dep1->getInjectable(), $dep3->getInjectable());
     }
 
+    public function test_custom_injectable_tag()
+    {
+        $cb = $this->getContainer(new TagInjectablePass('custom.injectable_tag'), array(
+            'my_injectable' => $this->getInjectableDefinition()->addTag('custom.injectable_tag', array(
+                    'tag' => 'injectable_aware',
+                    'method' => 'setInjectable'
+                )),
+            'my_dep_1' => $this->getInjectableAwareDefinition()->addTag('injectable_aware'),
+            'my_dep_2' => $this->getInjectableAwareDefinition()->addTag('not_injectable_aware'),
+            'my_dep_3' => $this->getInjectableAwareDefinition()->addTag('injectable_aware'),
+        ));
+
+        $dep1 = $cb->get('my_dep_1');
+        $dep2 = $cb->get('my_dep_2');
+        $dep3 = $cb->get('my_dep_3');
+
+        $this->assertNull($dep2->getInjectable());
+        $this->assertInstanceOf('StdClass', $dep1->getInjectable());
+        $this->assertSame($dep1->getInjectable(), $dep3->getInjectable());
+    }
+
     /**
      * @return Definition
      */
