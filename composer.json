@@ -18,5 +18,10 @@
         "symfony/dependency-injection": "~2.0",
         "symfony/http-kernel": "~2.0",
         "symfony/config": "~2.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.3-dev"
+        }
     }
 }
