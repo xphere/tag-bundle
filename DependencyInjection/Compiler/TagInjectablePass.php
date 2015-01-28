@@ -32,12 +32,12 @@ use Symfony\Component\DependencyInjection\Reference;
  *     tags:
  *       - { name: "tag.injectable", tag: "dispatcher.aware", method: "setDispatcher" }
  *
- *   myservice:
+ *   myservice1:
  *     class: Acme\Bundle\Service\MyService
  *     tags:
  *       - { name: "dispatcher.aware" }
  *
- *   myservice:
+ *   myservice2:
  *     class: Acme\Bundle\Service\OtherService
  *     tags:
  *       - { name: "dispatcher.aware", "method": "setEventDispatcher" }
@@ -45,34 +45,62 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class TagInjectablePass implements CompilerPassInterface
 {
-    private $tag;
+    /**
+     * @var string
+     *
+     * Name of the tag to mark services as tag injectors
+     */
+    private $tagName;
 
     /**
-     * @param string $tag Name of the tag to mark services as tag injectors
+     * Constructor
+     *
+     * @param string $tagName Name of the tag to mark services as tag injectors
      */
-    public function __construct($tag)
+    public function __construct($tagName)
     {
-        $this->tag = $tag;
+        $this->tagName = $tagName;
     }
 
     /**
      * @param ContainerBuilder $container
+     *
      * @throws \InvalidArgumentException
      */
     public function process(ContainerBuilder $container)
     {
-        foreach ($container->findTaggedServiceIds($this->tag) as $id => $tags) {
+        $taggedServices = $container->findTaggedServiceIds($this->tagName);
+        foreach ($taggedServices as $id => $tags) {
+
             $reference = new Reference($id);
             foreach ($tags as $attr) {
-                $defaultMethod = $this->getAttribute($id, $attr, 'method');
+
                 $tag = $this->getAttribute($id, $attr, 'tag');
-                foreach ($container->findTaggedServiceIds($tag) as $serviceId => $serviceTags) {
-                    $definition = $container->getDefinition($serviceId);
-                    foreach ($serviceTags as $attr) {
-                        $method = isset($attr['method']) ? $attr['method'] : $defaultMethod;
-                        $definition->addMethodCall($method, array($reference));
-                    }
-                }
+                $method = $this->getAttribute($id, $attr, 'method');
+
+                $this->injectInto($reference, $container, $tag, $method);
+            }
+        }
+    }
+
+    /**
+     * Inject $injectable into each service tagged with $tag
+     *
+     * @param Reference $injectable Service to inject into others
+     * @param ContainerBuilder $container Container where to find definitions
+     * @param string $tag Services tagged with this will be injected
+     * @param string $defaultMethod Name of the method to call, by default
+     */
+    protected function injectInto(Reference $injectable, ContainerBuilder $container, $tag, $defaultMethod)
+    {
+        $taggedServices = $container->findTaggedServiceIds($tag);
+        foreach ($taggedServices as $serviceId => $serviceTags) {
+
+            $definition = $container->getDefinition($serviceId);
+            foreach ($serviceTags as $attr) {
+
+                $method = isset($attr['method']) ? $attr['method'] : $defaultMethod;
+                $definition->addMethodCall($method, array($injectable));
             }
         }
     }
@@ -83,6 +111,9 @@ class TagInjectablePass implements CompilerPassInterface
      * @param string $id
      * @param array $attributes
      * @param string $attribute
+     *
+     * @return string
+     *
      * @throws \InvalidArgumentException
      */
     protected function getAttribute($id, array $attributes, $attribute)
@@ -93,7 +124,7 @@ class TagInjectablePass implements CompilerPassInterface
 
         throw new \InvalidArgumentException(sprintf(
             'Service "%s" must define the "%s" attribute on "%s" tags.',
-            $id, $attribute, $this->tag
+            $id, $attribute, $this->tagName
         ));
     }
 }

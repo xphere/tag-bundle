@@ -1,10 +1,24 @@
 <?php
 
+/**
+ * This file is part of the Berny\TagBundle package
+ *
+ * (c) Berny Cantos <be@rny.cc>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
+/**
+ * Class ConsumerPassTest
+ *
+ * @author Berny Cantos <be@rny.cc>
+ */
 class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 {
     public function test_inject_selected_dependencies()

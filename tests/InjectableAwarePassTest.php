@@ -1,10 +1,24 @@
 <?php
 
+/**
+ * This file is part of the Berny\TagBundle package
+ *
+ * (c) Berny Cantos <be@rny.cc>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
+/**
+ * Class InjectablePassTest
+ *
+ * @author Berny Cantos <be@rny.cc>
+ */
 class InjectablePassTest extends \PHPUnit_Framework_TestCase
 {
     public function test_set_injectable_as_dependency()
@@ -96,7 +110,6 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param CompilerPassInterface $compilerPass
-     *
      * @param array $definitions
      *
      * @return ContainerBuilder

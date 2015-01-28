@@ -42,31 +42,43 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class TagConsumerPass implements CompilerPassInterface
 {
-    private $tag;
+    /**
+     * @var string
+     *
+     * Name of the tag to mark services as tag consumers
+     */
+    private $tagName;
 
     /**
-     * @param string $tag Name of the tag to mark services as tag consumers
+     * Constructor
+     *
+     * @param string $tagName Name of the tag to mark services as tag consumers
      */
-    public function __construct($tag)
+    public function __construct($tagName)
     {
-        $this->tag = $tag;
+        $this->tagName = $tagName;
     }
 
     /**
-     * Process the container
+     * Find services tagged as consumer and process them
      *
      * @param ContainerBuilder $container
+     *
      * @throws \InvalidArgumentException
      */
     public function process(ContainerBuilder $container)
     {
-        foreach ($container->findTaggedServiceIds($this->tag) as $id => $tags) {
+        $taggedServices = $container->findTaggedServiceIds($this->tagName);
+
+        foreach ($taggedServices as $id => $tags) {
+
             $definition = $container->getDefinition($id);
             foreach ($tags as $attr) {
+
                 $method = $this->getAttribute($id, $attr, 'method');
                 $tag = $this->getAttribute($id, $attr, 'tag');
-                $serviceIds = $container->findTaggedServiceIds($tag);
-                $services = $this->getSortedReferences($serviceIds);
+                $services = $this->getSortedReferences($container, $tag);
+
                 if (isset($attr['bulk']) && $attr['bulk']) {
                     $this->injectBulk($definition, $services, $method);
                 } else {
@@ -103,18 +115,26 @@ class TagConsumerPass implements CompilerPassInterface
     }
 
     /**
-     * Return all tagged services, optionally ordered by 'order' attribute
+     * Return all tagged services, optionally ordered by 'order' attribute.
      *
-     * @param array $serviceIds
+     * @param ContainerBuilder $container
+     * @param string $tagName
+     *
      * @return Reference[]
      */
-    protected function getSortedReferences($serviceIds)
+    protected function getSortedReferences(ContainerBuilder $container, $tagName)
     {
-        $ordered = $unordered = array();
+        $ordered = array();
+        $unordered = array();
+
+        $serviceIds = $container->findTaggedServiceIds($tagName);
         foreach ($serviceIds as $serviceId => $tags) {
+
             $service = new Reference($serviceId);
             foreach ($tags as $tag) {
+
                 $order = isset($tag['order']) ? $tag['order'] : null;
+
                 if ($order === null) {
                     $unordered[] = $service;
                 } else {
@@ -122,11 +142,14 @@ class TagConsumerPass implements CompilerPassInterface
                 }
             }
         }
+
         if (empty($ordered)) {
             return $unordered;
         }
+
         ksort($ordered);
         $ordered[] = $unordered;
+
         return call_user_func_array('array_merge', $ordered);
     }
 
@@ -146,7 +169,7 @@ class TagConsumerPass implements CompilerPassInterface
 
         throw new \InvalidArgumentException(sprintf(
             'Service "%s" must define the "%s" attribute on "%s" tags.',
-            $id, $attribute, $this->tag
+            $id, $attribute, $this->tagName
         ));
     }
 }
