@@ -47,7 +47,7 @@ class TagConsumerPass implements CompilerPassInterface
     /**
      * @param string $tag Name of the tag to mark services as tag consumers
      */
-    public function __construct($tag = 'tag.consumer')
+    public function __construct($tag)
     {
         $this->tag = $tag;
     }

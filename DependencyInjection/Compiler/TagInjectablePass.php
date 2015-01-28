@@ -50,7 +50,7 @@ class TagInjectablePass implements CompilerPassInterface
     /**
      * @param string $tag Name of the tag to mark services as tag injectors
      */
-    public function __construct($tag = 'tag.injectable')
+    public function __construct($tag)
     {
         $this->tag = $tag;
     }

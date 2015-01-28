@@ -9,7 +9,7 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
 {
     public function test_set_injectable_as_dependency()
     {
-        $cb = $this->getContainer(new TagInjectablePass(), array(
+        $cb = $this->getContainer(new TagInjectablePass('tag.injectable'), array(
             'my_injectable' => $this->getInjectableDefinition()->addTag('tag.injectable', array(
                 'tag' => 'injectable_aware',
                 'method' => 'setInjectable'
@@ -30,8 +30,9 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
 
     public function test_custom_injectable_tag()
     {
-        $cb = $this->getContainer(new TagInjectablePass('custom.injectable_tag'), array(
-            'my_injectable' => $this->getInjectableDefinition()->addTag('custom.injectable_tag', array(
+        $injectableTagName = 'custom.injectable_tag';
+        $cb = $this->getContainer(new TagInjectablePass($injectableTagName), array(
+            'my_injectable' => $this->getInjectableDefinition()->addTag($injectableTagName, array(
                     'tag' => 'injectable_aware',
                     'method' => 'setInjectable'
                 )),
@@ -51,7 +52,7 @@ class InjectablePassTest extends \PHPUnit_Framework_TestCase
 
     public function test_custom_method_on_a_per_injectable_aware_basis()
     {
-        $cb = $this->getContainer(new TagInjectablePass(), array(
+        $cb = $this->getContainer(new TagInjectablePass('tag.injectable'), array(
             'my_injectable' => $this->getInjectableDefinition()->addTag('tag.injectable', array(
                 'tag' => 'injectable_aware',
                 'method' => 'setInjectable'

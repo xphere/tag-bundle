@@ -14,13 +14,18 @@ namespace Berny\Bundle\TagBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
+use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+
 class TagBundle extends Bundle
 {
     public function build(ContainerBuilder $container)
     {
         parent::build($container);
 
-        $container->addCompilerPass(new DependencyInjection\Compiler\TagConsumerPass());
-        $container->addCompilerPass(new DependencyInjection\Compiler\TagInjectablePass());
+        $container
+            ->addCompilerPass(new TagConsumerPass('tag.consumer'))
+            ->addCompilerPass(new TagInjectablePass('tag.injectable'))
+        ;
     }
 }

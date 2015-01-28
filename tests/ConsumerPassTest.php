@@ -9,7 +9,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 {
     public function test_inject_selected_dependencies()
     {
-        $cb = $this->getContainer(new TagConsumerPass(), array(
+        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
             'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
                 'tag' => 'dependency',
                 'method' => 'addDependency'
