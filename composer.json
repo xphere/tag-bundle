@@ -10,9 +10,8 @@
         }
     ],
     "type": "symfony-bundle",
-    "target-dir": "Berny/Bundle/TagBundle",
     "autoload": {
-        "psr-0": { "Berny\\Bundle\\TagBundle\\": "" }
+        "psr-4": { "Berny\\Bundle\\TagBundle\\": "" }
     },
     "require": {
         "symfony/dependency-injection": "~2.0,>=2.0.10",
