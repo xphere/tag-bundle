@@ -15,9 +15,9 @@
         "psr-0": { "Berny\\Bundle\\TagBundle\\": "" }
     },
     "require": {
-        "symfony/dependency-injection": "~2.0",
-        "symfony/http-kernel": "~2.0",
-        "symfony/config": "~2.0"
+        "symfony/dependency-injection": "~2.0,>=2.0.10",
+        "symfony/http-kernel": "~2.0,>=2.0.10",
+        "symfony/config": "~2.0,>=2.0.10"
     },
     "extra": {
         "branch-alias": {
