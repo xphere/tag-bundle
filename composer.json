@@ -19,7 +19,8 @@
         "symfony/config": "~2.0,>=2.0.10"
     },
     "require-dev": {
-        "phpunit/phpunit": ">=3.7"
+        "php": ">=5.5",
+        "phpunit/phpunit": "~4.5"
     },
     "extra": {
         "branch-alias": {
