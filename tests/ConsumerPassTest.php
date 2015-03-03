@@ -9,10 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+
+use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 
 /**
  * Class ConsumerPassTest

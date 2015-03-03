@@ -17,6 +17,11 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
+/**
+ * Class TagBundle
+ *
+ * @author Berny Cantos <be@rny.cc>
+ */
 class TagBundle extends Bundle
 {
     public function build(ContainerBuilder $container)
