@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Berny\TagBundle package
+ * This file is part of the xphere/tag-bundle package
  *
  * (c) Berny Cantos <be@rny.cc>
  *
@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
 /**
  * Class InjectablePassTest

@@ -1,4 +1,4 @@
-Berny\TagBundle
+xphere/tag-bundle
 ===============
 
 Are you tired to add `CompilerPass`es just to collect some services tagged on your container?
@@ -101,7 +101,7 @@ Installation
 ------------
 
 ### From [composer/packagist](https://getcomposer.org)
-- Add `"berny/tag-bundle": "*@dev"` to your `composer.json` file
+- Require `xphere/tag-bundle` package in your composer
 - Add the bundle to your `AppKernel.php`
 
 Usage
@@ -195,8 +195,8 @@ In your `Kernel`:
 ```php
 
 [...]
-use \Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use \Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 [...]
 
 class AppKernel extends Kernel

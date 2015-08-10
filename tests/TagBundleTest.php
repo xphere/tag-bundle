@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Berny\TagBundle package
+ * This file is part of the xphere/tag-bundle package
  *
  * (c) Berny Cantos <be@rny.cc>
  *
@@ -9,12 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
-use Berny\Bundle\TagBundle\TagBundle;
 use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use xPheRe\Bundle\TagBundle\TagBundle;
 
 /**
  * Class TagBundleTest

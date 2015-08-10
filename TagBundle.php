@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Berny\TagBundle package
+ * This file is part of the xphere/tag-bundle package
  *
  * (c) Berny Cantos <be@rny.cc>
  *
@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Berny\Bundle\TagBundle;
+namespace xPheRe\Bundle\TagBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use Berny\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
 /**
  * Class TagBundle
