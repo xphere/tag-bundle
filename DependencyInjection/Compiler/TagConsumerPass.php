@@ -13,7 +13,6 @@ namespace xPheRe\Bundle\TagBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
@@ -69,49 +68,29 @@ class TagConsumerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         $taggedServices = $container->findTaggedServiceIds($this->tagName);
-
         foreach ($taggedServices as $id => $tags) {
 
             $definition = $container->getDefinition($id);
             foreach ($tags as $attr) {
 
-                $method = $this->getAttribute($id, $attr, 'method');
                 $tag = $this->getAttribute($id, $attr, 'tag');
                 $services = $this->getSortedReferences($container, $tag);
 
-                if (isset($attr['bulk']) && $attr['bulk']) {
-                    $this->injectBulk($definition, $services, $method);
+                if (isset($attr['method'])) {
+
+                    if (isset($attr['bulk']) && $attr['bulk']) {
+                        $services = array($services);
+                    }
+
+                    foreach ($services as $service) {
+                        $definition->addMethodCall($attr['method'], array($service));
+                    }
+
                 } else {
-                    $this->injectEach($definition, $services, $method);
+                    $definition->addArgument($services);
                 }
             }
         }
-    }
-
-    /**
-     * Injects $serviceIds into $definition with one call to $method for each service
-     *
-     * @param Definition $definition
-     * @param Reference[] $services
-     * @param string $method
-     */
-    protected function injectEach(Definition $definition, array $services, $method)
-    {
-        foreach ($services as $service) {
-            $definition->addMethodCall($method, array($service));
-        }
-    }
-
-    /**
-     * Injects $serviceIds into $definition with one call to $method with all services in an array
-     *
-     * @param Definition $definition
-     * @param Reference[] $services
-     * @param string $method
-     */
-    protected function injectBulk(Definition $definition, array $services, $method)
-    {
-        $definition->addMethodCall($method, array($services));
     }
 
     /**
@@ -122,7 +101,7 @@ class TagConsumerPass implements CompilerPassInterface
      *
      * @return Reference[]
      */
-    protected function getSortedReferences(ContainerBuilder $container, $tagName)
+    private function getSortedReferences(ContainerBuilder $container, $tagName)
     {
         $ordered = array();
         $unordered = array();
@@ -161,7 +140,7 @@ class TagConsumerPass implements CompilerPassInterface
      * @param string $attribute
      * @throws \InvalidArgumentException
      */
-    protected function getAttribute($id, array $attributes, $attribute)
+    private function getAttribute($id, array $attributes, $attribute)
     {
         if (isset($attributes[$attribute])) {
             return $attributes[$attribute];

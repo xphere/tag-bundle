@@ -150,6 +150,8 @@ services:
 
 This is calling `PluginEnumerator::addPlugins` just once, with an array of the services.
 
+To make the service consume its dependencies through it's constructor, just omit the `method` attribute in the tag.
+
 ### Injectable
 
 You can define a service as a "tag injectable" from another tag, and let the bundle do the hard work.

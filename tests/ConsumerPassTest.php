@@ -42,8 +42,9 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
     public function test_custom_consumer_tag()
     {
         $consumerTagName = 'service.consumer';
+        $definition = $this->getConsumerDefinition();
         $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
-            'my_service' => $this->getConsumerDefinition()->addTag($consumerTagName, array(
+            'my_service' => $definition->addTag($consumerTagName, array(
                 'tag' => 'dependency',
                 'method' => 'addDependency'
             )),
@@ -54,13 +55,16 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(1, $dependencies);
         $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertCount(0, $definition->getArguments());
+        $this->assertCount(1, $definition->getMethodCalls());
     }
 
     public function test_bulk_insert()
     {
         $consumerTagName = 'service.consumer';
+        $definition = $this->getConsumerDefinition();
         $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
-            'my_service' => $this->getConsumerDefinition()->addTag($consumerTagName, array(
+            'my_service' => $definition->addTag($consumerTagName, array(
                 'tag' => 'dependency',
                 'method' => 'setDependencies',
                 'bulk' => true,
@@ -73,6 +77,28 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(2, $dependencies);
         $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertCount(0, $definition->getArguments());
+        $this->assertCount(1, $definition->getMethodCalls());
+    }
+
+    public function test_constructor_insert()
+    {
+        $consumerTagName = 'service.consumer';
+        $definition = $this->getConsumerDefinition();
+        $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
+            'my_service' => $definition->addTag($consumerTagName, array(
+                'tag' => 'dependency',
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency'),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertCount(1, $definition->getArguments());
+        $this->assertCount(0, $definition->getMethodCalls());
     }
 
     /**
@@ -112,6 +138,11 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 class MockedConsumerService
 {
     protected $dependencies = array();
+
+    public function __construct(array $dependencies = array())
+    {
+        $this->setDependencies($dependencies);
+    }
 
     public function addDependency($dependency)
     {
