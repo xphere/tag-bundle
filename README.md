@@ -7,6 +7,12 @@ Say NO to most of them with this bundle!
 
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/dccda8eb-884b-456b-adea-3a821a7ec1c3/small.png)](https://insight.sensiolabs.com/projects/dccda8eb-884b-456b-adea-3a821a7ec1c3)
 
+⚠ Note ⚠
+--------
+Mind the namespace change
+- Before `0.4.0`: `Berny\Bundle\TagBundle`
+- After  `0.4.0`: `xPheRe\Bundle\TagBundle`
+
 Why I would want that?
 ----------------------
 
