@@ -13,6 +13,7 @@ namespace xPheRe\Bundle\TagBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
@@ -31,12 +32,12 @@ use Symfony\Component\DependencyInjection\Reference;
  *   application:
  *     class: Symfony\Component\Console\Application
  *     tags:
- *       - { name: "tag.consumer", tag: "console.command", method: "addCommands", bulk: true }
+ *       - { name: "tag.consumer", tag: "console.command", method: "addCommands", bulk: true, key: "alias" }
  *
  *   command_1:
  *     class: Acme\Bundle\Command\MyCommand
  *     tags:
- *       - { name: "console.command" }
+ *       - { name: "console.command", alias: "acme_my_command" }
  *
  */
 class TagConsumerPass implements CompilerPassInterface
@@ -71,25 +72,37 @@ class TagConsumerPass implements CompilerPassInterface
         foreach ($taggedServices as $id => $tags) {
 
             $definition = $container->getDefinition($id);
-            foreach ($tags as $attr) {
+            foreach ($tags as $tag) {
 
-                $tag = $this->getAttribute($id, $attr, 'tag');
-                $services = $this->getSortedReferences($container, $tag);
+                $tagName = $this->getAttribute($id, $tag, 'tag');
+                $key = isset($tag['key']) ? $tag['key'] : false;
+                $references = $this->getSortedDependencies($container, $tagName, $key);
+                $this->configureConsumer($definition, $tag, $references);
+            }
+        }
+    }
 
-                if (isset($attr['method'])) {
+    /**
+     * Configures a consumer with its dependencies
+     *
+     * @param Definition       $definition
+     * @param array            $tag
+     * @param array            $references
+     */
+    private function configureConsumer(Definition $definition, array $tag, array $references)
+    {
+        if (isset($tag['method'])) {
 
-                    if (isset($attr['bulk']) && $attr['bulk']) {
-                        $services = array($services);
-                    }
-
-                    foreach ($services as $service) {
-                        $definition->addMethodCall($attr['method'], array($service));
-                    }
-
-                } else {
-                    $definition->addArgument($services);
+            if (isset($tag['bulk']) && $tag['bulk']) {
+                $definition->addMethodCall($tag['method'], array($references));
+            } else {
+                foreach ($references as $name => $service) {
+                    $definition->addMethodCall($tag['method'], array($service, $name));
                 }
             }
+
+        } else {
+            $definition->addArgument($references);
         }
     }
 
@@ -97,11 +110,12 @@ class TagConsumerPass implements CompilerPassInterface
      * Return all tagged services, optionally ordered by 'order' attribute.
      *
      * @param ContainerBuilder $container
-     * @param string $tagName
+     * @param string           $tagName
+     * @param string           $key
      *
      * @return Reference[]
      */
-    private function getSortedReferences(ContainerBuilder $container, $tagName)
+    private function getSortedDependencies(ContainerBuilder $container, $tagName, $key)
     {
         $ordered = array();
         $unordered = array();
@@ -112,13 +126,23 @@ class TagConsumerPass implements CompilerPassInterface
             $service = new Reference($serviceId);
             foreach ($tags as $tag) {
 
-                $order = isset($tag['order']) ? $tag['order'] : null;
+                if (isset($tag['order']) && is_numeric($tag['order'])) {
+                    $order = $tag['order'];
+                    $dependencies = &$ordered[$order];
 
-                if ($order === null) {
-                    $unordered[] = $service;
                 } else {
-                    $ordered[$order][] = $service;
+                    $dependencies = &$unordered;
                 }
+
+                if ($key) {
+                    $name = $this->getAttribute($serviceId, $tag, $key);
+                    $dependencies[$name] = $service;
+
+                } else {
+                    $dependencies[] = $service;
+                }
+
+                unset($dependencies);
             }
         }
 
@@ -136,19 +160,20 @@ class TagConsumerPass implements CompilerPassInterface
      * Get attribute value
      *
      * @param string $id
-     * @param array $attributes
-     * @param string $attribute
+     * @param array  $tag
+     * @param string $attributeName
+     *
      * @throws \InvalidArgumentException
      */
-    private function getAttribute($id, array $attributes, $attribute)
+    private function getAttribute($id, array $tag, $attributeName)
     {
-        if (isset($attributes[$attribute])) {
-            return $attributes[$attribute];
+        if (isset($tag[$attributeName])) {
+            return $tag[$attributeName];
         }
 
         throw new \InvalidArgumentException(sprintf(
             'Service "%s" must define the "%s" attribute on "%s" tags.',
-            $id, $attribute, $this->tagName
+            $id, $attributeName, $this->tagName
         ));
     }
 }

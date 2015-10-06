@@ -101,6 +101,66 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $definition->getMethodCalls());
     }
 
+    public function test_use_key()
+    {
+        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
+            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+                'tag' => 'dependency',
+                'method' => 'addDependencyWithAlias',
+                'key' => 'alias',
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertArrayHasKey('first', $dependencies);
+        $this->assertArrayHasKey('second', $dependencies);
+    }
+
+    public function test_bulk_use_key()
+    {
+        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
+            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+                'tag' => 'dependency',
+                'method' => 'setDependencies',
+                'bulk' => true,
+                'key' => 'alias',
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertArrayHasKey('first', $dependencies);
+        $this->assertArrayHasKey('second', $dependencies);
+    }
+
+    public function test_constructor_use_key()
+    {
+        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
+            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+                'tag' => 'dependency',
+                'key' => 'alias',
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertArrayHasKey('first', $dependencies);
+        $this->assertArrayHasKey('second', $dependencies);
+    }
+
     /**
      * @return Definition
      */
@@ -147,6 +207,11 @@ class MockedConsumerService
     public function addDependency($dependency)
     {
         $this->dependencies[] = $dependency;
+    }
+
+    public function addDependencyWithAlias($dependency, $alias)
+    {
+        $this->dependencies[$alias] = $dependency;
     }
 
     public function setDependencies(array $dependencies)
