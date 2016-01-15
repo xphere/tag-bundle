@@ -161,6 +161,26 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('second', $dependencies);
     }
 
+    public function test_service_names_when_reference_is_false()
+    {
+        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
+            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+                'tag' => 'dependency',
+                'key' => 'alias',
+                'reference' => false,
+            )),
+            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
+            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
+            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
+        ));
+        $dependencies = $cb->get('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnly('string', $dependencies);
+        $this->assertContains('my_dep_1', $dependencies);
+        $this->assertContains('my_dep_3', $dependencies);
+    }
+
     /**
      * @return Definition
      */
