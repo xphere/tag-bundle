@@ -76,7 +76,8 @@ class TagConsumerPass implements CompilerPassInterface
 
                 $tagName = $this->getAttribute($id, $tag, 'tag');
                 $key = isset($tag['key']) ? $tag['key'] : false;
-                $references = $this->getSortedDependencies($container, $tagName, $key);
+                $asReference = isset($tag['reference']) ? $tag['reference'] : true;
+                $references = $this->getSortedDependencies($container, $tagName, $key, $asReference);
                 $this->configureConsumer($definition, $tag, $references);
             }
         }
@@ -112,10 +113,11 @@ class TagConsumerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param string           $tagName
      * @param string           $key
+     * @param bool             $asReference
      *
-     * @return Reference[]
+     * @return Reference[]|string[]
      */
-    private function getSortedDependencies(ContainerBuilder $container, $tagName, $key)
+    private function getSortedDependencies(ContainerBuilder $container, $tagName, $key, $asReference)
     {
         $ordered = array();
         $unordered = array();
@@ -123,7 +125,7 @@ class TagConsumerPass implements CompilerPassInterface
         $serviceIds = $container->findTaggedServiceIds($tagName);
         foreach ($serviceIds as $serviceId => $tags) {
 
-            $service = new Reference($serviceId);
+            $service = $asReference ? new Reference($serviceId) : $serviceId;
             foreach ($tags as $tag) {
 
                 if (isset($tag['order']) && is_numeric($tag['order'])) {
