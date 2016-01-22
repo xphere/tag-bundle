@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
@@ -22,158 +21,158 @@ use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
  */
 class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 {
+    const TAG = 'service.consumer';
+
     public function test_inject_selected_dependencies()
     {
-        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
-            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
-                'method' => 'addDependency'
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency'),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+                'method' => 'addDependency',
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withService('my_dep_3', 'dependency')
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
-    }
-
-    public function test_custom_consumer_tag()
-    {
-        $consumerTagName = 'service.consumer';
-        $definition = $this->getConsumerDefinition();
-        $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
-            'my_service' => $definition->addTag($consumerTagName, array(
-                'tag' => 'dependency',
-                'method' => 'addDependency'
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
-
-        $this->assertCount(1, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
-        $this->assertCount(0, $definition->getArguments());
-        $this->assertCount(1, $definition->getMethodCalls());
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
+        $this->assertCount(0, $this->consumer->getArguments());
+        $this->assertCount(2, $this->consumer->getMethodCalls());
     }
 
     public function test_bulk_insert()
     {
-        $consumerTagName = 'service.consumer';
-        $definition = $this->getConsumerDefinition();
-        $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
-            'my_service' => $definition->addTag($consumerTagName, array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
                 'method' => 'setDependencies',
                 'bulk' => true,
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency'),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withService('my_dep_3', 'dependency')
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
-        $this->assertCount(0, $definition->getArguments());
-        $this->assertCount(1, $definition->getMethodCalls());
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
+        $this->assertCount(0, $this->consumer->getArguments());
+        $this->assertCount(1, $this->consumer->getMethodCalls());
     }
 
     public function test_constructor_insert()
     {
-        $consumerTagName = 'service.consumer';
-        $definition = $this->getConsumerDefinition();
-        $cb = $this->getContainer(new TagConsumerPass($consumerTagName), array(
-            'my_service' => $definition->addTag($consumerTagName, array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency'),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency'),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withService('my_dep_3', 'dependency')
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
-        $this->assertCount(1, $definition->getArguments());
-        $this->assertCount(0, $definition->getMethodCalls());
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
+        $this->assertCount(1, $this->consumer->getArguments());
+        $this->assertCount(0, $this->consumer->getMethodCalls());
     }
 
     public function test_use_key()
     {
-        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
-            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
                 'method' => 'addDependencyWithAlias',
                 'key' => 'alias',
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency', [ 'alias' => 'second', ])
+            ->withService('my_dep_2', 'not_a_dependency', [ 'alias' => 'third', ])
+            ->withService('my_dep_3', 'dependency', [ 'alias' => 'first', ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
         $this->assertArrayHasKey('first', $dependencies);
         $this->assertArrayHasKey('second', $dependencies);
+        $this->assertCount(0, $this->consumer->getArguments());
+        $this->assertCount(2, $this->consumer->getMethodCalls());
     }
 
     public function test_bulk_use_key()
     {
-        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
-            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
                 'method' => 'setDependencies',
                 'bulk' => true,
                 'key' => 'alias',
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency', [ 'alias' => 'second', ])
+            ->withService('my_dep_2', 'not_a_dependency', [ 'alias' => 'third', ])
+            ->withService('my_dep_3', 'dependency', [ 'alias' => 'first', ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
         $this->assertArrayHasKey('first', $dependencies);
         $this->assertArrayHasKey('second', $dependencies);
+        $this->assertCount(0, $this->consumer->getArguments());
+        $this->assertCount(1, $this->consumer->getMethodCalls());
     }
 
     public function test_constructor_use_key()
     {
-        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
-            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
                 'key' => 'alias',
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency', [ 'alias' => 'second', ])
+            ->withService('my_dep_2', 'not_a_dependency', [ 'alias' => 'third', ])
+            ->withService('my_dep_3', 'dependency', [ 'alias' => 'first', ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
-        $this->assertContainsOnlyInstancesOf('StdClass', $dependencies);
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
         $this->assertArrayHasKey('first', $dependencies);
         $this->assertArrayHasKey('second', $dependencies);
+        $this->assertCount(1, $this->consumer->getArguments());
+        $this->assertCount(0, $this->consumer->getMethodCalls());
     }
 
     public function test_service_names_when_reference_is_false()
     {
-        $cb = $this->getContainer(new TagConsumerPass('tag.consumer'), array(
-            'my_service' => $this->getConsumerDefinition()->addTag('tag.consumer', array(
+        $this
+            ->withConsumer('my_service', [
                 'tag' => 'dependency',
                 'key' => 'alias',
                 'reference' => false,
-            )),
-            'my_dep_1' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'second', ]),
-            'my_dep_2' => $this->getDependencyDefinition()->addTag('not_a_dependency'),
-            'my_dep_3' => $this->getDependencyDefinition()->addTag('dependency', [ 'alias' => 'first', ]),
-        ));
-        $dependencies = $cb->get('my_service')->getDependencies();
+            ])
+            ->withService('my_dep_1', 'dependency', [ 'alias' => 'second', ])
+            ->withService('my_dep_2', 'not_a_dependency', [ 'alias' => 'third', ])
+            ->withService('my_dep_3', 'dependency', [ 'alias' => 'first', ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
 
         $this->assertCount(2, $dependencies);
         $this->assertContainsOnly('string', $dependencies);
@@ -181,37 +180,92 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('my_dep_3', $dependencies);
     }
 
-    /**
-     * @return Definition
-     */
-    protected function getConsumerDefinition()
-    {
-        return new Definition('MockedConsumerService');
-    }
+    /** @var ContainerBuilder */
+    private $container;
+
+    /** @var Definition */
+    private $consumer;
 
     /**
-     * @return Definition
-     */
-    protected function getDependencyDefinition()
-    {
-        return new Definition('StdClass');
-    }
-
-    /**
-     * @param CompilerPassInterface $compilerPass
-     *
-     * @param array $definitions
+     * Get current container
      *
      * @return ContainerBuilder
      */
-    protected function getContainer(CompilerPassInterface $compilerPass, array $definitions)
+    private function getContainerBuilder()
     {
-        $containerBuilder = new ContainerBuilder();
-        $containerBuilder->addDefinitions($definitions);
-        $compilerPass->process($containerBuilder);
-        $containerBuilder->compile();
+        if (!$this->container) {
+            $compilerPass = new TagConsumerPass(self::TAG);
+            $this->container = new ContainerBuilder();
+            $this->container->addCompilerPass($compilerPass);
+        }
 
-        return $containerBuilder;
+        return $this->container;
+    }
+
+    /**
+     * Create a tagged consumer
+     *
+     * @param string $serviceName
+     * @param array $tagOptions
+     *
+     * @return self
+     */
+    private function withConsumer($serviceName, array $tagOptions)
+    {
+        $cb = $this->getContainerBuilder();
+
+        $definition = new Definition(MockedConsumerService::class);
+        $definition->addTag(self::TAG, $tagOptions);
+
+        $cb->setDefinition($serviceName, $definition);
+
+        $this->consumer = $definition;
+
+        return $this;
+    }
+
+    /**
+     * Create a (optionally tagged) service
+     *
+     * @param string $serviceName
+     * @param string|null $tagName
+     * @param array $tagAttributes
+     *
+     * @return self
+     */
+    private function withService($serviceName, $tagName = null, array $tagAttributes = [])
+    {
+        $cb = $this->getContainerBuilder();
+
+        $definition = new Definition(MockedDependency::class);
+        if ($tagName) {
+            $definition->addTag($tagName, $tagAttributes);
+        }
+
+        $cb->setDefinition($serviceName, $definition);
+
+        return $this;
+    }
+
+    /**
+     * Finish container building and compile
+     */
+    private function compile()
+    {
+        $cb = $this->getContainerBuilder();
+        $cb->compile();
+    }
+
+    /**
+     * Get a service from the container
+     *
+     * @param string $serviceId
+     *
+     * @return object
+     */
+    private function getService($serviceId)
+    {
+        return $this->getContainerBuilder()->get($serviceId);
     }
 }
 
@@ -243,4 +297,8 @@ class MockedConsumerService
     {
         return $this->dependencies;
     }
+}
+
+class MockedDependency
+{
 }
