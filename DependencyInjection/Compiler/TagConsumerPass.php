@@ -74,10 +74,13 @@ class TagConsumerPass implements CompilerPassInterface
             $definition = $container->getDefinition($id);
             foreach ($tags as $tag) {
 
-                $tagName = $this->getAttribute($id, $tag, 'tag');
-                $key = isset($tag['key']) ? $tag['key'] : false;
-                $asReference = isset($tag['reference']) ? $tag['reference'] : true;
-                $references = $this->getSortedDependencies($container, $tagName, $key, $asReference);
+                $references = $this->getSortedDependencies($container, [
+                    'tag' => $this->getAttribute($id, $tag, 'tag'),
+                    'key' => $this->getAttribute($id, $tag, 'key', false),
+                    'reference' => $this->getAttribute($id, $tag, 'reference', true),
+                    'instanceof' => $this->getAttribute($id, $tag, 'instanceof', false),
+                ]);
+
                 $this->configureConsumer($definition, $tag, $references);
             }
         }
@@ -86,9 +89,9 @@ class TagConsumerPass implements CompilerPassInterface
     /**
      * Configures a consumer with its dependencies
      *
-     * @param Definition       $definition
-     * @param array            $tag
-     * @param array            $references
+     * @param Definition $definition
+     * @param array      $tag
+     * @param array      $references
      */
     private function configureConsumer(Definition $definition, array $tag, array $references)
     {
@@ -111,21 +114,29 @@ class TagConsumerPass implements CompilerPassInterface
      * Return all tagged services, optionally ordered by 'order' attribute.
      *
      * @param ContainerBuilder $container
-     * @param string           $tagName
-     * @param string           $key
-     * @param bool             $asReference
+     * @param array            $options
      *
      * @return Reference[]|string[]
      */
-    private function getSortedDependencies(ContainerBuilder $container, $tagName, $key, $asReference)
+    private function getSortedDependencies(ContainerBuilder $container, array $options)
     {
         $ordered = array();
         $unordered = array();
 
-        $serviceIds = $container->findTaggedServiceIds($tagName);
+        $serviceIds = $container->findTaggedServiceIds($options['tag']);
         foreach ($serviceIds as $serviceId => $tags) {
 
-            $service = $asReference ? new Reference($serviceId) : $serviceId;
+            if ($options['instanceof']) {
+                $class = $container->getDefinition($serviceId)->getClass();
+                if (!is_a($class, $options['instanceof'], true)) {
+                    throw new \UnexpectedValueException(sprintf(
+                        'Service "%s" tagged as "%s" must be an instance of class "%s". Found "%s" instead.',
+                        $serviceId, $options['tag'], $options['instanceof'], $class
+                    ));
+                }
+            }
+
+            $service = $options['reference'] ? new Reference($serviceId) : $serviceId;
             foreach ($tags as $tag) {
 
                 if (isset($tag['order']) && is_numeric($tag['order'])) {
@@ -136,8 +147,8 @@ class TagConsumerPass implements CompilerPassInterface
                     $dependencies = &$unordered;
                 }
 
-                if ($key) {
-                    $name = $this->getAttribute($serviceId, $tag, $key);
+                if ($options['key']) {
+                    $name = $this->getAttribute($serviceId, $tag, $options['key']);
                     $dependencies[$name] = $service;
 
                 } else {
@@ -164,13 +175,20 @@ class TagConsumerPass implements CompilerPassInterface
      * @param string $id
      * @param array  $tag
      * @param string $attributeName
+     * @param mixed  $default
+     *
+     * @return mixed
      *
      * @throws \InvalidArgumentException
      */
-    private function getAttribute($id, array $tag, $attributeName)
+    private function getAttribute($id, array $tag, $attributeName, $default = null)
     {
         if (isset($tag[$attributeName])) {
             return $tag[$attributeName];
+        }
+
+        if (func_num_args() > 2) {
+            return $default;
         }
 
         throw new \InvalidArgumentException(sprintf(
