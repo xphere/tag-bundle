@@ -78,6 +78,7 @@ class TagConsumerPass implements CompilerPassInterface
                     'tag' => $this->getAttribute($id, $tag, 'tag'),
                     'key' => $this->getAttribute($id, $tag, 'key', false),
                     'reference' => $this->getAttribute($id, $tag, 'reference', true),
+                    'instanceof' => $this->getAttribute($id, $tag, 'instanceof', false),
                 ]);
 
                 $this->configureConsumer($definition, $tag, $references);
@@ -124,6 +125,16 @@ class TagConsumerPass implements CompilerPassInterface
 
         $serviceIds = $container->findTaggedServiceIds($options['tag']);
         foreach ($serviceIds as $serviceId => $tags) {
+
+            if ($options['instanceof']) {
+                $class = $container->getDefinition($serviceId)->getClass();
+                if (!is_a($class, $options['instanceof'], true)) {
+                    throw new \UnexpectedValueException(sprintf(
+                        'Service "%s" tagged as "%s" must be an instance of class "%s". Found "%s" instead.',
+                        $serviceId, $options['tag'], $options['instanceof'], $class
+                    ));
+                }
+            }
 
             $service = $options['reference'] ? new Reference($serviceId) : $serviceId;
             foreach ($tags as $tag) {
