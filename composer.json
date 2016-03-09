@@ -14,9 +14,9 @@
         "psr-4": { "xPheRe\\Bundle\\TagBundle\\": "" }
     },
     "require": {
-        "symfony/dependency-injection": "~2.0,>=2.0.10",
-        "symfony/http-kernel": "~2.0,>=2.0.10",
-        "symfony/config": "~2.0,>=2.0.10"
+        "symfony/dependency-injection": ">=2.0.10",
+        "symfony/http-kernel": ">=2.0.10",
+        "symfony/config": ">=2.0.10"
     },
     "require-dev": {
         "php": ">=5.5",
