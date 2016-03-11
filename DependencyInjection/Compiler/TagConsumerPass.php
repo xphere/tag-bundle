@@ -23,8 +23,8 @@ use Symfony\Component\DependencyInjection\Reference;
  * If "bulk" is true, calls "method" only once, but with all tagged services in an array.
  *
  * You can define a tag consumer with the "tag.consumer" tag. (by default)
- * Mandatory parameters: method, tag
- * Optional parameters: bulk (=false)
+ * Mandatory parameters: tag
+ * Optional parameters: method, bulk, key, multiple, reference, instanceof
  *
  * Example:
  *
