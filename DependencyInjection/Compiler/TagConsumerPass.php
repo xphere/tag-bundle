@@ -23,8 +23,8 @@ use Symfony\Component\DependencyInjection\Reference;
  * If "bulk" is true, calls "method" only once, but with all tagged services in an array.
  *
  * You can define a tag consumer with the "tag.consumer" tag. (by default)
- * Mandatory parameters: method, tag
- * Optional parameters: bulk (=false)
+ * Mandatory parameters: tag
+ * Optional parameters: method, bulk, key, multiple, reference, instanceof
  *
  * Example:
  *
@@ -79,6 +79,7 @@ class TagConsumerPass implements CompilerPassInterface
                     'key' => $this->getAttribute($id, $tag, 'key', false),
                     'reference' => $this->getAttribute($id, $tag, 'reference', true),
                     'instanceof' => $this->getAttribute($id, $tag, 'instanceof', false),
+                    'multiple' => $this->getAttribute($id, $tag, 'multiple', false),
                 ]);
 
                 $this->configureConsumer($definition, $tag, $references);
@@ -149,7 +150,11 @@ class TagConsumerPass implements CompilerPassInterface
 
                 if ($options['key']) {
                     $name = $this->getAttribute($serviceId, $tag, $options['key']);
-                    $dependencies[$name] = $service;
+                    if ($options['multiple']) {
+                        $dependencies[$name][] = $service;
+                    } else {
+                        $dependencies[$name] = $service;
+                    }
 
                 } else {
                     $dependencies[] = $service;
@@ -166,7 +171,7 @@ class TagConsumerPass implements CompilerPassInterface
         ksort($ordered);
         $ordered[] = $unordered;
 
-        return call_user_func_array('array_merge', $ordered);
+        return call_user_func_array('array_merge_recursive', $ordered);
     }
 
     /**

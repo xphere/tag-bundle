@@ -215,6 +215,77 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
             ->compile();
     }
 
+    public function test_allow_multiple_services_with_same_key()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'key' => 'index',
+                'multiple' => true,
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withAlternateService('my_dep_3', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(1, $dependencies);
+        $this->assertCount(2, $dependencies['first']);
+    }
+
+    public function test_multiple_holds_order()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'key' => 'index',
+                'multiple' => true,
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withAlternateService('my_dep_3', 'dependency', [
+                'index' => 'first',
+                'order' => 1,
+            ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies['first'][0]);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies['first'][1]);
+    }
+
+    public function test_multiple_even_with_single_dependency()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'key' => 'index',
+                'multiple' => true,
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withService('my_dep_3')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(1, $dependencies);
+        $this->assertCount(1, $dependencies['first']);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies['first'][0]);
+    }
+
     /** @var ContainerBuilder */
     private $container;
 
