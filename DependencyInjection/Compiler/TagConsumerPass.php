@@ -74,13 +74,10 @@ class TagConsumerPass implements CompilerPassInterface
             $definition = $container->getDefinition($id);
             foreach ($tags as $tag) {
 
-                $references = $this->getSortedDependencies($container, [
-                    'tag' => $this->getAttribute($id, $tag, 'tag'),
-                    'key' => $this->getAttribute($id, $tag, 'key', false),
-                    'reference' => $this->getAttribute($id, $tag, 'reference', true),
-                    'instanceof' => $this->getAttribute($id, $tag, 'instanceof', false),
-                    'multiple' => $this->getAttribute($id, $tag, 'multiple', false),
-                ]);
+                $references = $this->getSortedDependencies(
+                    $container,
+                    $this->buildOptionsFromServiceTag($id, $tag)
+                );
 
                 $this->configureConsumer($definition, $tag, $references);
             }
@@ -125,6 +122,7 @@ class TagConsumerPass implements CompilerPassInterface
         $unordered = array();
 
         $serviceIds = $container->findTaggedServiceIds($options['tag']);
+
         foreach ($serviceIds as $serviceId => $tags) {
 
             if ($options['instanceof']) {
@@ -148,14 +146,23 @@ class TagConsumerPass implements CompilerPassInterface
                     $dependencies = &$unordered;
                 }
 
-                if ($options['key']) {
+                if ('key' === $options['index-by']) {
                     $name = $this->getAttribute($serviceId, $tag, $options['key']);
+
                     if ($options['multiple']) {
                         $dependencies[$name][] = $service;
                     } else {
                         $dependencies[$name] = $service;
                     }
 
+                } elseif ('class' === $options['index-by']) {
+                    $name = $container->getDefinition($serviceId)->getClass();
+
+                    if ($options['multiple']) {
+                        $dependencies[$name][] = $service;
+                    } else {
+                        $dependencies[$name] = $service;
+                    }
                 } else {
                     $dependencies[] = $service;
                 }
@@ -200,5 +207,48 @@ class TagConsumerPass implements CompilerPassInterface
             'Service "%s" must define the "%s" attribute on "%s" tags.',
             $id, $attributeName, $this->tagName
         ));
+    }
+
+    public function buildOptionsFromServiceTag($serviceId, $tag)
+    {
+        $key = $this->getAttribute($serviceId, $tag, 'key', false);
+        $indexBy = $this->getAttribute($serviceId, $tag, 'index-by', false);
+        if(false === $indexBy && false !== $key) {
+            $indexBy = 'key';
+        }
+
+        $options = [
+            'tag' => $this->getAttribute($serviceId, $tag, 'tag'),
+            'index-by' => $indexBy,
+            'key' => $key,
+            'reference' => $this->getAttribute($serviceId, $tag, 'reference', true),
+            'instanceof' => $this->getAttribute($serviceId, $tag, 'instanceof', false),
+            'multiple' => $this->getAttribute($serviceId, $tag, 'multiple', false),
+        ];
+
+        $this->validateTagOptions($serviceId, $options);
+
+        return $options;
+    }
+
+    private function validateTagOptions($serviceId, array $options)
+    {
+        if (
+            false !== $options['index-by']
+            && 'key' !== $options['index-by']
+            && 'class' !== $options['index-by']
+        ) {
+            throw new \InvalidArgumentException(sprintf(
+                'Service "%s" index by option "%s" is invalid.',
+                $serviceId, $options['index-by']
+            ));
+        }
+
+        if ('key' === $options['index-by'] && false === $options['key']) {
+            throw new \InvalidArgumentException(sprintf(
+                'Service "%s, no key found for index by key.',
+                $serviceId
+            ));
+        }
     }
 }

@@ -286,6 +286,159 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(MockedDependency::class, $dependencies['first'][0]);
     }
 
+    public function test_index_by_key_with_key_undefined()
+    {
+        $this->setExpectedException(\InvalidArgumentException::class);
+
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'key',
+            ])
+            ->compile();
+    }
+
+    public function test_index_by_key()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'key',
+                'key' => 'index',
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withAlternateService('my_dep_3', 'dependency', [
+                'index' => 'second',
+            ])
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies['first']);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies['second']);
+    }
+
+    public function test_index_by_key_multiple_services()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'key',
+                'key' => 'index',
+                'multiple' => true,
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withAlternateService('my_dep_3', 'dependency', [
+                'index' => 'second',
+            ])
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertCount(1, $dependencies['first']);
+        $this->assertCount(1, $dependencies['second']);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies['first'][0]);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies['second'][0]);
+    }
+
+    public function test_index_by_key_multiple_services_with_multiple_option_disabled()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'key',
+                'key' => 'index',
+            ])
+            ->withService('my_dep_1', 'dependency', [
+                'index' => 'first',
+            ])
+            ->withService('my_dep_2', 'dependency', [
+                'index' => 'second',
+            ])
+            ->withService('my_dep_3', 'not_a_dependency')
+            ->withAlternateService('my_dep_4', 'dependency', [
+                'index' => 'second',
+            ])
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies['first']);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies['second']);
+    }
+
+    public function test_index_by_class()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'class',
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'not_a_dependency')
+            ->withAlternateService('my_dep_3', 'dependency')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies[MockedDependency::class]);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies[MockedAlternateDependency::class]);
+    }
+
+    public function test_index_by_class_with_multiple_option_active()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'class',
+                'multiple' => true,
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'dependency')
+            ->withService('my_dep_3', 'not_a_dependency')
+            ->withAlternateService('my_dep_4', 'dependency')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertCount(2, $dependencies[MockedDependency::class]);
+        $this->assertCount(1, $dependencies[MockedAlternateDependency::class]);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies[MockedDependency::class][0]);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies[MockedDependency::class][1]);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies[MockedAlternateDependency::class][0]);
+    }
+
+    public function test_index_by_class_with_multiple_option_disabled_and_multiple_same_classes()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'index-by' => 'class',
+            ])
+            ->withService('my_dep_1', 'dependency')
+            ->withService('my_dep_2', 'dependency')
+            ->withService('my_dep_3', 'not_a_dependency')
+            ->withAlternateService('my_dep_4', 'dependency')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertInstanceOf(MockedDependency::class, $dependencies[MockedDependency::class]);
+        $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies[MockedAlternateDependency::class]);
+    }
+
     /** @var ContainerBuilder */
     private $container;
 
