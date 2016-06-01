@@ -439,6 +439,27 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(MockedAlternateDependency::class, $dependencies[MockedAlternateDependency::class]);
     }
 
+    public function test_constructor_without_bulk()
+    {
+        $this
+            ->withConsumer('my_service', MockedNotBulkService::class, [
+                'tag' => 'dependency',
+                'bulk' => false,
+            ])
+            ->withService('my_dep_1', 'dependency', [ 'alias' => 'second', ])
+            ->withService('my_dep_2', 'not_a_dependency', [ 'alias' => 'third', ])
+            ->withService('my_dep_3', 'dependency', [ 'alias' => 'first', ])
+            ->withService('my_dep_4')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(2, $dependencies);
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
+        $this->assertCount(2, $this->consumer->getArguments());
+        $this->assertCount(0, $this->consumer->getMethodCalls());
+    }
+
     /** @var ContainerBuilder */
     private $container;
 
@@ -567,6 +588,14 @@ class MockedConsumerService
     public function getDependencies()
     {
         return $this->dependencies;
+    }
+}
+
+class MockedNotBulkService extends MockedConsumerService
+{
+    public function __construct()
+    {
+        parent::__construct(func_get_args());
     }
 }
 

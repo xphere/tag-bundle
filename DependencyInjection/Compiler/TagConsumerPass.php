@@ -104,7 +104,14 @@ class TagConsumerPass implements CompilerPassInterface
             }
 
         } else {
-            $definition->addArgument($references);
+
+            if (isset($tag['bulk']) && !$tag['bulk']) {
+                foreach ($references as $service) {
+                    $definition->addArgument($service);
+                }
+            } else {
+                $definition->addArgument($references);
+            }
         }
     }
 
