@@ -188,7 +188,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'instanceof' => MockedDependency::class,
             ])
             ->withService('my_dep_1', 'dependency')
-            ->withAlternateService('my_dep_2', 'not_a_dependency')
+            ->withService('my_dep_2', 'not_a_dependency', MockedAlternateDependency::class)
             ->withService('my_dep_3', 'dependency')
             ->withService('my_dep_4')
             ->compile();
@@ -210,7 +210,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
             ])
             ->withService('my_dep_1', 'dependency')
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency')
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class)
             ->withService('my_dep_4')
             ->compile();
     }
@@ -227,7 +227,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'index' => 'first',
             ])
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency', [
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class, [
                 'index' => 'first',
             ])
             ->withService('my_dep_4')
@@ -251,7 +251,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'index' => 'first',
             ])
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency', [
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class, [
                 'index' => 'first',
                 'order' => 1,
             ])
@@ -310,7 +310,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'index' => 'first',
             ])
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency', [
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class, [
                 'index' => 'second',
             ])
             ->compile();
@@ -335,7 +335,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'index' => 'first',
             ])
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency', [
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class, [
                 'index' => 'second',
             ])
             ->compile();
@@ -364,7 +364,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
                 'index' => 'second',
             ])
             ->withService('my_dep_3', 'not_a_dependency')
-            ->withAlternateService('my_dep_4', 'dependency', [
+            ->withService('my_dep_4', 'dependency', MockedAlternateDependency::class, [
                 'index' => 'second',
             ])
             ->compile();
@@ -385,7 +385,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
             ])
             ->withService('my_dep_1', 'dependency')
             ->withService('my_dep_2', 'not_a_dependency')
-            ->withAlternateService('my_dep_3', 'dependency')
+            ->withService('my_dep_3', 'dependency', MockedAlternateDependency::class)
             ->compile();
 
         $dependencies = $this->getService('my_service')->getDependencies();
@@ -406,7 +406,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
             ->withService('my_dep_1', 'dependency')
             ->withService('my_dep_2', 'dependency')
             ->withService('my_dep_3', 'not_a_dependency')
-            ->withAlternateService('my_dep_4', 'dependency')
+            ->withService('my_dep_4', 'dependency', MockedAlternateDependency::class)
             ->compile();
 
         $dependencies = $this->getService('my_service')->getDependencies();
@@ -429,7 +429,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
             ->withService('my_dep_1', 'dependency')
             ->withService('my_dep_2', 'dependency')
             ->withService('my_dep_3', 'not_a_dependency')
-            ->withAlternateService('my_dep_4', 'dependency')
+            ->withService('my_dep_4', 'dependency', MockedAlternateDependency::class)
             ->compile();
 
         $dependencies = $this->getService('my_service')->getDependencies();
@@ -466,14 +466,20 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
      *
      * @param string $serviceName
      * @param array $tagOptions
+     * @param string $className
      *
-     * @return self
+     * @return static
      */
-    private function withConsumer($serviceName, array $tagOptions)
+    private function withConsumer($serviceName, $className = MockedConsumerService::class, array $tagOptions = [])
     {
+        if (is_array($className)) {
+            $tagOptions = $className;
+            $className = MockedConsumerService::class;
+        }
+
         $cb = $this->getContainerBuilder();
 
-        $definition = new Definition(MockedConsumerService::class);
+        $definition = new Definition($className);
         $definition->addTag(self::TAG, $tagOptions);
 
         $cb->setDefinition($serviceName, $definition);
@@ -489,37 +495,20 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
      * @param string $serviceName
      * @param string|null $tagName
      * @param array $tagAttributes
+     * @param string $className
      *
-     * @return self
+     * @return static
      */
-    private function withService($serviceName, $tagName = null, array $tagAttributes = [])
+    private function withService($serviceName, $tagName = null, $className = MockedDependency::class, array $tagAttributes = [])
     {
-        $cb = $this->getContainerBuilder();
-
-        $definition = new Definition(MockedDependency::class);
-        if ($tagName) {
-            $definition->addTag($tagName, $tagAttributes);
+        if (is_array($className)) {
+            $tagAttributes = $className;
+            $className = MockedDependency::class;
         }
 
-        $cb->setDefinition($serviceName, $definition);
-
-        return $this;
-    }
-
-    /**
-     * Create an alternate (optionally tagged) service
-     *
-     * @param string $serviceName
-     * @param string|null $tagName
-     * @param array $tagAttributes
-     *
-     * @return self
-     */
-    private function withAlternateService($serviceName, $tagName = null, array $tagAttributes = [])
-    {
         $cb = $this->getContainerBuilder();
 
-        $definition = new Definition(MockedAlternateDependency::class);
+        $definition = new Definition($className);
         if ($tagName) {
             $definition->addTag($tagName, $tagAttributes);
         }
