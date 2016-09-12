@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace xPheRe\Bundle\TagBundle\DependencyInjection\Compiler;
+namespace Xphere\Bundle\TagBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Reference;
+
+use Xphere\Tag;
 
 /**
  * Collects all tag consumers and configures them like this:
@@ -68,194 +68,129 @@ class TagConsumerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        $taggedServices = $container->findTaggedServiceIds($this->tagName);
-        foreach ($taggedServices as $id => $tags) {
+        $builder = new Tag\CompilerPassBuilder();
 
-            $definition = $container->getDefinition($id);
-            foreach ($tags as $tag) {
+        $builder
+            ->byTag($this->tagName)
+            ->withDefaults([
+                'index-by' => false,
+                'instanceof' => false,
+                'key' => false,
+                'method' => false,
+                'multiple' => false,
+                'order-by' => 'order',
+                'reference' => true,
+            ])
+            ->addStage(function ($iterator, ContainerBuilder $builder) {
+                foreach ($iterator as $collectedService) {
+                    $this->processTaggedService($collectedService, $builder);
+                }
+            });
 
-                $references = $this->getSortedDependencies(
-                    $container,
-                    $this->buildOptionsFromServiceTag($id, $tag)
-                );
-
-                $this->configureConsumer($definition, $tag, $references);
-            }
-        }
+        $compilerPass = $builder->build();
+        $compilerPass->process($container);
     }
 
-    /**
-     * Configures a consumer with its dependencies
-     *
-     * @param Definition $definition
-     * @param array      $tag
-     * @param array      $references
-     */
-    private function configureConsumer(Definition $definition, array $tag, array $references)
+    private function processTaggedService(Tag\CollectedService $service, ContainerBuilder $container)
     {
-        if (isset($tag['method'])) {
+        $builder = new Tag\CompilerPassBuilder();
 
-            if (isset($tag['bulk']) && $tag['bulk']) {
-                $definition->addMethodCall($tag['method'], array($references));
-            } else {
-                foreach ($references as $name => $service) {
-                    $definition->addMethodCall($tag['method'], array($service, $name));
-                }
-            }
+        $builder->byTag($service->attribute('tag'));
+        $this->processIndex($service, $builder);
+        $this->processReference($service, $builder);
+        $this->processOrder($service, $builder);
+        $this->processInstanceOf($service, $builder);
+        $this->processInjection($service, $builder);
 
-        } else {
-
-            if (isset($tag['bulk']) && !$tag['bulk']) {
-                foreach ($references as $service) {
-                    $definition->addArgument($service);
-                }
-            } else {
-                $definition->addArgument($references);
-            }
-        }
+        $builder->build()->process($container);
     }
 
-    /**
-     * Return all tagged services, optionally ordered by 'order' attribute.
-     *
-     * @param ContainerBuilder $container
-     * @param array            $options
-     *
-     * @return Reference[]|string[]
-     */
-    private function getSortedDependencies(ContainerBuilder $container, array $options)
+    private function processIndex(Tag\CollectedService $service, Tag\CompilerPassBuilder $builder)
     {
-        $ordered = array();
-        $unordered = array();
-
-        $serviceIds = $container->findTaggedServiceIds($options['tag']);
-
-        foreach ($serviceIds as $serviceId => $tags) {
-
-            if ($options['instanceof']) {
-                $class = $container->getDefinition($serviceId)->getClass();
-                if (!is_a($class, $options['instanceof'], true)) {
-                    throw new \UnexpectedValueException(sprintf(
-                        'Service "%s" tagged as "%s" must be an instance of class "%s". Found "%s" instead.',
-                        $serviceId, $options['tag'], $options['instanceof'], $class
-                    ));
-                }
-            }
-
-            $service = $options['reference'] ? new Reference($serviceId) : $serviceId;
-            foreach ($tags as $tag) {
-
-                if (isset($tag['order']) && is_numeric($tag['order'])) {
-                    $order = $tag['order'];
-                    $dependencies = &$ordered[$order];
-
-                } else {
-                    $dependencies = &$unordered;
-                }
-
-                if ('key' === $options['index-by']) {
-                    $name = $this->getAttribute($serviceId, $tag, $options['key']);
-
-                    if ($options['multiple']) {
-                        $dependencies[$name][] = $service;
-                    } else {
-                        $dependencies[$name] = $service;
-                    }
-
-                } elseif ('class' === $options['index-by']) {
-                    $name = $container->getDefinition($serviceId)->getClass();
-
-                    if ($options['multiple']) {
-                        $dependencies[$name][] = $service;
-                    } else {
-                        $dependencies[$name] = $service;
-                    }
-                } else {
-                    $dependencies[] = $service;
-                }
-
-                unset($dependencies);
-            }
-        }
-
-        if (empty($ordered)) {
-            return $unordered;
-        }
-
-        ksort($ordered);
-        $ordered[] = $unordered;
-
-        return call_user_func_array('array_merge_recursive', $ordered);
-    }
-
-    /**
-     * Get attribute value
-     *
-     * @param string $id
-     * @param array  $tag
-     * @param string $attributeName
-     * @param mixed  $default
-     *
-     * @return mixed
-     *
-     * @throws \InvalidArgumentException
-     */
-    private function getAttribute($id, array $tag, $attributeName, $default = null)
-    {
-        if (isset($tag[$attributeName])) {
-            return $tag[$attributeName];
-        }
-
-        if (func_num_args() > 2) {
-            return $default;
-        }
-
-        throw new \InvalidArgumentException(sprintf(
-            'Service "%s" must define the "%s" attribute on "%s" tags.',
-            $id, $attributeName, $this->tagName
-        ));
-    }
-
-    public function buildOptionsFromServiceTag($serviceId, $tag)
-    {
-        $key = $this->getAttribute($serviceId, $tag, 'key', false);
-        $indexBy = $this->getAttribute($serviceId, $tag, 'index-by', false);
+        $key = $service->attribute('key');
+        $indexBy = $service->attribute('index-by');
         if(false === $indexBy && false !== $key) {
             $indexBy = 'key';
         }
 
-        $options = [
-            'tag' => $this->getAttribute($serviceId, $tag, 'tag'),
-            'index-by' => $indexBy,
-            'key' => $key,
-            'reference' => $this->getAttribute($serviceId, $tag, 'reference', true),
-            'instanceof' => $this->getAttribute($serviceId, $tag, 'instanceof', false),
-            'multiple' => $this->getAttribute($serviceId, $tag, 'multiple', false),
-        ];
+        switch ($indexBy) {
+            case false:
+                return;
 
-        $this->validateTagOptions($serviceId, $options);
+            case 'key':
+                if (!is_string($key)) {
+                    throw new \InvalidArgumentException(sprintf(
+                        'Service "%s" tagged as "%s" defined "index-by" = "key" but no "key" field.',
+                        $service->identifier(),
+                        $this->tagName
+                    ));
+                }
 
-        return $options;
+                $indexBy = $key;
+                break;
+
+            case 'class':
+                $indexBy = new Tag\By\ClassName();
+                break;
+        }
+
+        if ($service->attribute('multiple')) {
+            $indexer = new Tag\Index\ForceArray();
+        } else {
+            $indexer = new Tag\Index\Override();
+        }
+
+        $builder->indexedBy($indexBy, $indexer);
     }
 
-    private function validateTagOptions($serviceId, array $options)
+    private function processReference(Tag\CollectedService $service, Tag\CompilerPassBuilder $builder)
     {
-        if (
-            false !== $options['index-by']
-            && 'key' !== $options['index-by']
-            && 'class' !== $options['index-by']
-        ) {
-            throw new \InvalidArgumentException(sprintf(
-                'Service "%s" index by option "%s" is invalid.',
-                $serviceId, $options['index-by']
-            ));
+        if ($service->attribute('reference') === false) {
+            $builder->asLazy();
+        }
+    }
+
+    private function processInstanceOf(Tag\CollectedService $service, Tag\CompilerPassBuilder $builder)
+    {
+        $instanceOfClass = $service->attribute('instanceof');
+        if ($instanceOfClass !== false) {
+            $builder->isInstanceOf($instanceOfClass);
+        }
+    }
+
+    private function processOrder(Tag\CollectedService $service, Tag\CompilerPassBuilder $builder)
+    {
+        $orderBy = $service->attribute('order-by');
+        if ($orderBy !== false) {
+            $builder
+                ->sortedBy($orderBy)
+                ->setDefault($orderBy, null)
+            ;
+        }
+    }
+
+    private function processInjection(Tag\CollectedService $service, Tag\CompilerPassBuilder $builder)
+    {
+        $methodName = $service->attribute('method');
+        $bulk = $service->hasAttribute('bulk') ? $service->attribute('bulk') : ($methodName === false);
+
+        $injector = null;
+        if ($methodName === false) {
+            if ($bulk === false) {
+                $injector = new Tag\Inject\Constructor\AddArguments();
+            } else {
+                $injector = new Tag\Inject\Constructor\AddArgument();
+            }
+        } else {
+            if ($bulk === false) {
+                $method = new Tag\Inject\Method\Multiple();
+            } else {
+                $method = new Tag\Inject\Method\Single();
+            }
+
+            $injector = new Tag\Inject\Method($methodName, $method);
         }
 
-        if ('key' === $options['index-by'] && false === $options['key']) {
-            throw new \InvalidArgumentException(sprintf(
-                'Service "%s, no key found for index by key.',
-                $serviceId
-            ));
-        }
+        $builder->injectTo($service->identifier(), $injector);
     }
 }

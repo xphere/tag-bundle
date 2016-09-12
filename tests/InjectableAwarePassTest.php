@@ -12,7 +12,7 @@
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
 /**
  * Class InjectablePassTest

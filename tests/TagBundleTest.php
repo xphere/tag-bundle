@@ -13,9 +13,9 @@ use Prophecy\Argument;
 use Prophecy\Prophecy\ObjectProphecy;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
-use xPheRe\Bundle\TagBundle\TagBundle;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use Xphere\Bundle\TagBundle\TagBundle;
 
 /**
  * Class TagBundleTest

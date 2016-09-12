@@ -12,7 +12,7 @@
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 
 /**
  * Class ConsumerPassTest
@@ -239,7 +239,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $dependencies['first']);
     }
 
-    public function test_multiple_holds_order()
+    public function test_multiple_sort_by_default_with_order()
     {
         $this
             ->withConsumer('my_service', [

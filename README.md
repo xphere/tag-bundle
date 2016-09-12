@@ -12,6 +12,7 @@ Say NO to most of them with this bundle!
 Mind the namespace change
 - Before `0.4.0`: `Berny\Bundle\TagBundle`
 - After  `0.4.0`: `xPheRe\Bundle\TagBundle`
+- After  `2.0.0`: `Xphere\Bundle\TagBundle` and `Xphere\Tag`
 
 Why I would want that?
 ----------------------
@@ -101,7 +102,7 @@ With this bundle you can:
 Compatibility
 -------------
 
-Tested under Symfony2, from 2.0.10 to 2.6.3
+Tested under Symfony2, from 2.0.10 to 3.1
 
 Installation
 ------------
@@ -289,8 +290,8 @@ In your `Kernel`:
 ```php
 
 [...]
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 [...]
 
 class AppKernel extends Kernel

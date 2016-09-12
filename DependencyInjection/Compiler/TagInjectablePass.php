@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace xPheRe\Bundle\TagBundle\DependencyInjection\Compiler;
+namespace Xphere\Bundle\TagBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

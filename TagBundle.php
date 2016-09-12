@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace xPheRe\Bundle\TagBundle;
+namespace Xphere\Bundle\TagBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
-use xPheRe\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
+use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
 /**
  * Class TagBundle
