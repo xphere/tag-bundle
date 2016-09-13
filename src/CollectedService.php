@@ -12,6 +12,7 @@
 namespace Xphere\Tag;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\DefinitionDecorator;
 
 class CollectedService
 {
@@ -34,6 +35,18 @@ class CollectedService
     public function identifier()
     {
         return $this->identifier;
+    }
+
+    public function className()
+    {
+        $definition = $this->definition();
+        $className = $definition->getClass();
+        if (empty($className) && $definition instanceof DefinitionDecorator) {
+            $definition = $this->container->findDefinition($definition->getParent());
+            $className = $definition->getClass();
+        }
+
+        return $className;
     }
 
     public function definition()

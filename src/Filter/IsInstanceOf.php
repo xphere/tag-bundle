@@ -41,6 +41,6 @@ class IsInstanceOf implements Validation
 
     private function classNameOf(CollectedService $collectedService)
     {
-        return $collectedService->definition()->getClass();
+        return $collectedService->className();
     }
 }

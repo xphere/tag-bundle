@@ -12,6 +12,7 @@
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
+use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 
 /**
@@ -460,6 +461,25 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $this->consumer->getMethodCalls());
     }
 
+    public function test_instanceof_works_with_parent_definitions()
+    {
+        $this
+            ->withConsumer('my_service', [
+                'tag' => 'dependency',
+                'instanceof' => MockedDependency::class,
+            ])
+            ->withAbstract('my_abstract', MockedDependency::class)
+            ->withChildService('my_dependency', 'my_abstract', 'dependency')
+            ->compile();
+
+        $dependencies = $this->getService('my_service')->getDependencies();
+
+        $this->assertCount(1, $dependencies);
+        $this->assertContainsOnlyInstancesOf(MockedDependency::class, $dependencies);
+        $this->assertCount(1, $this->consumer->getArguments());
+        $this->assertCount(0, $this->consumer->getMethodCalls());
+    }
+
     /** @var ContainerBuilder */
     private $container;
 
@@ -530,6 +550,50 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
         $cb = $this->getContainerBuilder();
 
         $definition = new Definition($className);
+        if ($tagName) {
+            $definition->addTag($tagName, $tagAttributes);
+        }
+
+        $cb->setDefinition($serviceName, $definition);
+
+        return $this;
+    }
+
+    /**
+     * Create an abstract definition to depend
+     *
+     * @param string $serviceName
+     * @param string $className
+     *
+     * @return static
+     */
+    private function withAbstract($serviceName, $className = MockedDependency::class)
+    {
+        $cb = $this->getContainerBuilder();
+
+        $definition = new Definition($className);
+        $definition->setAbstract(true);
+
+        $cb->setDefinition($serviceName, $definition);
+
+        return $this;
+    }
+
+    /**
+     * Create a (optionally tagged) service based on a parent definition
+     *
+     * @param string $serviceName
+     * @param string $parent
+     * @param string|null $tagName
+     * @param array $tagAttributes
+     *
+     * @return static
+     */
+    private function withChildService($serviceName, $parent, $tagName = null, array $tagAttributes = [])
+    {
+        $cb = $this->getContainerBuilder();
+
+        $definition = new DefinitionDecorator($parent);
         if ($tagName) {
             $definition->addTag($tagName, $tagAttributes);
         }

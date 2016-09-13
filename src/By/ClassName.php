@@ -17,6 +17,6 @@ class ClassName
 {
     public function __invoke(CollectedService $collectedService)
     {
-        return $collectedService->definition()->getClass();
+        return $collectedService->className();
     }
 }
