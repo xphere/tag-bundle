@@ -25,6 +25,29 @@ class ReplaceArgument implements Injector
 
     public function inject($dependencies, Definition $definition)
     {
-        $definition->replaceArgument($this->index, $dependencies);
+        $index = $this->index;
+        if (!is_numeric($index)) {
+            $index = $this->findIndexByReflection($definition, $index);
+        }
+
+        $definition->replaceArgument($index, $dependencies);
+    }
+
+    private function findIndexByReflection(Definition $definition, $argumentName)
+    {
+        $className = $definition->getClass();
+        $rc = new \ReflectionClass($className);
+
+        foreach ($rc->getConstructor()->getParameters() as $parameter) {
+            if ($parameter->getName() === $argumentName) {
+                return $parameter->getPosition();
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf(
+            'Named argument "%s" not found in class "%s" while injecting dependencies',
+            $argumentName,
+            $className
+        ));
     }
 }
