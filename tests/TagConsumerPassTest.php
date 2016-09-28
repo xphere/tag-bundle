@@ -9,6 +9,8 @@
  * file that was distributed with this source code.
  */
 
+namespace TestTagBundle;
+
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
@@ -16,11 +18,11 @@ use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagConsumerPass;
 
 /**
- * Class ConsumerPassTest
+ * Class TagConsumerPassTest
  *
  * @author Berny Cantos <be@rny.cc>
  */
-class ConsumerPassTest extends \PHPUnit_Framework_TestCase
+class TagConsumerPassTest extends \PHPUnit_Framework_TestCase
 {
     const TAG = 'service.consumer';
 
@@ -202,7 +204,7 @@ class ConsumerPassTest extends \PHPUnit_Framework_TestCase
 
     public function test_fail_check_instances()
     {
-        $this->setExpectedException(UnexpectedValueException::class);
+        $this->setExpectedException(\UnexpectedValueException::class);
 
         $this
             ->withConsumer('my_service', [

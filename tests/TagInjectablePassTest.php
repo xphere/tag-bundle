@@ -9,17 +9,19 @@
  * file that was distributed with this source code.
  */
 
+namespace TestTagBundle;
+
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
 use Xphere\Bundle\TagBundle\DependencyInjection\Compiler\TagInjectablePass;
 
 /**
- * Class InjectablePassTest
+ * Class TagInjectablePassTest
  *
  * @author Berny Cantos <be@rny.cc>
  */
-class InjectablePassTest extends \PHPUnit_Framework_TestCase
+class TagInjectablePassTest extends \PHPUnit_Framework_TestCase
 {
     const TAG = 'service.injectable';
 
