@@ -122,6 +122,8 @@ class CompilerPassBuilder
     public function asLazy()
     {
         $this->resolver = new Resolve\AsLazy();
+
+        return $this;
     }
 
     public function indexedBy($by, Index\Indexer $indexer = null)
