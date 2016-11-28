@@ -126,6 +126,13 @@ class CompilerPassBuilder
         return $this;
     }
 
+    public function validate(Filter\Validation $validation)
+    {
+        $this->validators[] = $validation;
+
+        return $this;
+    }
+
     public function indexedBy($by, Index\Indexer $indexer = null)
     {
         $this->indexed = new Index(
