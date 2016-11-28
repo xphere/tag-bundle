@@ -11,8 +11,6 @@
 
 namespace Xphere\Tag;
 
-use Xphere\Tag\Inject\Injector;
-
 class CompilerPassBuilder
 {
     private $collector;
@@ -143,7 +141,7 @@ class CompilerPassBuilder
         return $this;
     }
 
-    public function injectTo($serviceId, Injector $injector = null)
+    public function injectTo($serviceId, Inject\Injector $injector = null)
     {
         $this->injectors[$serviceId] = $injector ? $injector : new Inject\Constructor\AddArgument();
 
